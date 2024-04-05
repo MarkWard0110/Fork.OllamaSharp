@@ -55,7 +55,7 @@ do
 				new SelectionPrompt<string>()
 					.PageSize(10)
 					.Title("What demo do you want to run?")
-					.AddChoices(["Chat", "Image chat", "Model manager", "Exit"]));
+					.AddChoices(["Chat", "Image chat", "Model manager", "Prompt", "Exit"]));
 
 	AnsiConsole.Clear();
 
@@ -74,7 +74,11 @@ do
 			case "Model manager":
 				await new ModelManagerConsole(ollama).Run();
 				break;
-		}
+
+            case "Prompt":
+                await new PromptConsole(ollama).Run();
+                break;
+        }
 	}
 	catch (Exception ex)
 	{

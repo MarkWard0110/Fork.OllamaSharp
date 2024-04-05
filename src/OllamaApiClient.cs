@@ -106,7 +106,7 @@ namespace OllamaSharp
 		{
 			var builder = new StringBuilder();
 			var result = await GenerateCompletion(request, new ActionResponseStreamer<GenerateCompletionResponseStream>(status => builder.Append(status.Response)), cancellationToken);
-			return new ConversationContextWithResponse(builder.ToString(), result.Context);
+			return new ConversationContextWithResponse(builder.ToString(), result.Context, result.Metadata);
 		}
 
 		public async Task<IEnumerable<Message>> SendChat(ChatRequest chatRequest, IResponseStreamer<ChatResponseStream> streamer, CancellationToken cancellationToken = default)
@@ -206,7 +206,8 @@ namespace OllamaSharp
 				if (streamedResponse?.Done ?? false)
 				{
 					var doneResponse = JsonSerializer.Deserialize<GenerateCompletionDoneResponseStream>(line);
-					return new ConversationContext(doneResponse.Context);
+					var metadata = new ResponseMetadata(doneResponse.TotalDuration, doneResponse.LoadDuration, doneResponse.PromptEvalCount, doneResponse.PromptEvalDuration, doneResponse.EvalCount, doneResponse.EvalDuration);
+					return new ConversationContext(doneResponse.Context, metadata);
 				}
 			}
 
@@ -247,7 +248,8 @@ namespace OllamaSharp
 		}
 	}
 
-	public record ConversationContext(long[] Context);
+	public record ResponseMetadata(long TotalDuration, long LoadDuration, int PromptEvalCount, long PromptEvalDuration, int EvalCount, long EvalDuration);
+	public record ConversationContext(long[] Context, ResponseMetadata Metadata = null);
 
-	public record ConversationContextWithResponse(string Response, long[] Context) : ConversationContext(Context);
+	public record ConversationContextWithResponse(string Response, long[] Context, ResponseMetadata Metadata = null ) : ConversationContext(Context, Metadata);
 }
