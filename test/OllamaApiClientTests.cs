@@ -36,7 +36,7 @@ public class OllamaApiClientTests
 	public class GetCompletionMethod : OllamaApiClientTests
 	{
 		[Test]
-		public async Task Returns_Streamed_Responses_At_Once()
+		public async Task Using_extension_returns_Streamed_Responses_At_Once()
 		{
 			await using var stream = new MemoryStream();
 
@@ -55,6 +55,62 @@ public class OllamaApiClientTests
 			stream.Seek(0, SeekOrigin.Begin);
 
 			var context = await _client.GetCompletion("prompt", null, CancellationToken.None);
+
+			context.Response.Should().Be("The sky is blue.");
+			context.Context.Should().BeEquivalentTo(new int[] { 1, 2, 3 });
+		}
+
+		[Test]
+		public async Task Returns_Streamed_Responses_At_Once()
+		{
+			await using var stream = new MemoryStream();
+
+			_response = new HttpResponseMessage
+			{
+				StatusCode = HttpStatusCode.OK,
+				Content = new StreamContent(stream)
+			};
+
+			await using var writer = new StreamWriter(stream, leaveOpen: true);
+			writer.AutoFlush = true;
+			await writer.WriteCompletionStreamResponse("The ");
+			await writer.WriteCompletionStreamResponse("sky ");
+			await writer.WriteCompletionStreamResponse("is ");
+			await writer.FinishCompletionStreamResponse("blue.", context: new int[] { 1, 2, 3 });
+			stream.Seek(0, SeekOrigin.Begin);
+
+			var context = await _client.GetCompletion(new GenerateCompletionRequest { Prompt = "prompt" }, CancellationToken.None);
+
+			context.Response.Should().Be("The sky is blue.");
+			context.Context.Should().BeEquivalentTo(new int[] { 1, 2, 3 });
+		}
+
+		[Test]
+		public async Task Call_with_options()
+		{
+			await using var stream = new MemoryStream();
+
+			_response = new HttpResponseMessage
+			{
+				StatusCode = HttpStatusCode.OK,
+				Content = new StreamContent(stream)
+			};
+
+			await using var writer = new StreamWriter(stream, leaveOpen: true);
+			writer.AutoFlush = true;
+			await writer.WriteCompletionStreamResponse("The ");
+			await writer.WriteCompletionStreamResponse("sky ");
+			await writer.WriteCompletionStreamResponse("is ");
+			await writer.FinishCompletionStreamResponse("blue.", context: new int[] { 1, 2, 3 });
+			stream.Seek(0, SeekOrigin.Begin);
+
+			var context = await _client.GetCompletion(new GenerateCompletionRequest { 
+				Prompt = "prompt",
+				Options = new RequestOptions
+				{
+					Stop = new string[] { "im_start", "im_end" },
+				}
+			}, CancellationToken.None);
 
 			context.Response.Should().Be("The sky is blue.");
 			context.Context.Should().BeEquivalentTo(new int[] { 1, 2, 3 });
