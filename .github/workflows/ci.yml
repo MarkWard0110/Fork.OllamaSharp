@@ -1,4 +1,4 @@
-name: .NET Build, Test, and Publish Nuget Package
+name: .NET Build, Test, and !Publish Nuget Package
 
 on:
   push:
@@ -45,16 +45,16 @@ jobs:
     - name: Test
       run: dotnet test --no-build --configuration=Release --verbosity normal
       
-    - name: pack nuget packages
-      run: dotnet pack --output nupkgs --configuration=Release --no-restore --no-build /p:PackageVersion=${{steps.gitversion.outputs.semVer}}
+    # - name: pack nuget packages
+    #   run: dotnet pack --output nupkgs --configuration=Release --no-restore --no-build /p:PackageVersion=${{steps.gitversion.outputs.semVer}}
 
-    - name: Create a GitHub release
-      uses: ncipollo/release-action@v1
-      with:
-        tag: ${{steps.gitversion.outputs.semVer}}
-        name: Release ${{steps.gitversion.outputs.semVer}}
-      if: github.event_name != 'pull_request'
+    # - name: Create a GitHub release
+    #   uses: ncipollo/release-action@v1
+    #   with:
+    #     tag: ${{steps.gitversion.outputs.semVer}}
+    #     name: Release ${{steps.gitversion.outputs.semVer}}
+    #   if: github.event_name != 'pull_request'
 
-    - name: upload nuget package
-      if: github.event_name != 'pull_request'
-      run: dotnet nuget push nupkgs/OllamaSharp*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json
+    # - name: upload nuget package
+    #   if: github.event_name != 'pull_request'
+    #   run: dotnet nuget push nupkgs/OllamaSharp*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json
