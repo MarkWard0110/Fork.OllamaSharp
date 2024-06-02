@@ -1,19 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
-		<LangVersion>10</LangVersion>
+		<LangVersion>latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Title>API bindings for Ollama</Title>
-		<Copyright>Andreas Wäscher</Copyright>
+		<Copyright>Mark Ward, 2024 Andreas Wäscher</Copyright>
 		<PackageIcon>Ollama.png</PackageIcon>
 		<Description>
 			This project adds bindings to the Ollama API to include offline LLMs into your .NET apps
 		</Description>
-		<PackageProjectUrl>https://github.com/awaescher/OllamaSharp</PackageProjectUrl>
+		<PackageProjectUrl>https://github.com/MarkWard0110/Fork.OllamaSharp</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<RepositoryUrl>https://github.com/awaescher/OllamaSharp</RepositoryUrl>
+		<RepositoryUrl>https://github.com/MarkWard0110/Fork.OllamaSharp</RepositoryUrl>
 		<PackageTags>ollama;ollama-api;api;llm</PackageTags>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 	</PropertyGroup>

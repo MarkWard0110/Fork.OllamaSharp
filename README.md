@@ -1,5 +1,8 @@
 # OllamaSharp 🦙
 
+This project is a fork of [OllamaSharp](https://github.com/awaescher/OllamaSharp) by Andreas Wäscher.
+
+
 OllamaSharp is a .NET binding for the [Ollama API](https://github.com/jmorganca/ollama/blob/main/docs/api.md), making it easy to interact with Ollama using your favorite .NET languages.
 
 ## Features
