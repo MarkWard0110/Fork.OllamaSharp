@@ -179,21 +179,10 @@ public class OllamaApiClientTests
 				}
 			};
 
-			var messages = (await _client.SendChat(chat, s => builder.Append(s.Message), CancellationToken.None)).ToArray();
+			var response = (await _client.SendChat(chat, s => builder.Append(s.Message), CancellationToken.None));
 
-			messages.Length.Should().Be(4);
-
-			messages[0].Role.Should().Be(ChatRole.User);
-			messages[0].Content.Should().Be("Why?");
-
-			messages[1].Role.Should().Be(ChatRole.Assistant);
-			messages[1].Content.Should().Be("Because!");
-
-			messages[2].Role.Should().Be(ChatRole.User);
-			messages[2].Content.Should().Be("And where?");
-
-			messages[3].Role.Should().Be(ChatRole.Assistant);
-			messages[3].Content.Should().Be("Leave me alone.");
+			response.Response.Role.Should().Be(ChatRole.Assistant);
+			response.Response.Content.Should().Be("Leave me alone.");
 		}
 	}
 

@@ -53,8 +53,8 @@ namespace OllamaSharp
 		/// Can be used to update the user interface while the answer is still being generated.
 		/// </param>
 		/// <param name="cancellationToken">The token to cancel the operation with</param>
-		/// <returns>List of the returned messages including the previous context</returns>
-		public static async Task<IEnumerable<Message>> SendChat(this IOllamaApiClient client, ChatRequest chatRequest, Action<ChatResponseStream> streamer, CancellationToken cancellationToken = default)
+		/// <returns>Response</returns>
+		public static async Task<ConversationResponse> SendChat(this IOllamaApiClient client, ChatRequest chatRequest, Action<ChatResponseStream> streamer, CancellationToken cancellationToken = default)
 		{
 			return await client.SendChat(chatRequest, new ActionResponseStreamer<ChatResponseStream>(streamer), cancellationToken);
 		}

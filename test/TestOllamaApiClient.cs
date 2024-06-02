@@ -58,29 +58,28 @@ public class TestOllamaApiClient : IOllamaApiClient
 		throw new NotImplementedException();
 	}
 
-	public async Task<IEnumerable<Message>> SendChat(ChatRequest chatRequest, Action<ChatResponseStream> streamer, CancellationToken cancellationToken)
+	public async Task<ConversationResponse> SendChat(ChatRequest chatRequest, Action<ChatResponseStream> streamer, CancellationToken cancellationToken)
 	{
 		var message = new Message(_role, _answer);
 		streamer(new ChatResponseStream { Done = true, Message = message, CreatedAt = DateTime.UtcNow.ToString(), Model = chatRequest.Model });
 
 		await Task.Yield();
 
-		var messages = chatRequest.Messages.ToList();
-		messages.Add(message);
-		return messages;
-	}
+		var response = new ConversationResponse(message);
+        return response;
 
-	public async Task<IEnumerable<Message>> SendChat(ChatRequest chatRequest, IResponseStreamer<ChatResponseStream> streamer, CancellationToken cancellationToken)
+    }
+
+	public async Task<ConversationResponse> SendChat(ChatRequest chatRequest, IResponseStreamer<ChatResponseStream> streamer, CancellationToken cancellationToken)
 	{
 		var message = new Message(_role, _answer);
 		streamer.Stream(new ChatResponseStream { Done = true, Message = message, CreatedAt = DateTime.UtcNow.ToString(), Model = chatRequest.Model });
 
 		await Task.Yield();
 
-		var messages = chatRequest.Messages.ToList();
-		messages.Add(message);
-		return messages;
-	}
+        var response = new ConversationResponse(message);
+        return response;
+    }
 
 	public Task<ConversationContext> StreamCompletion(GenerateCompletionRequest request, IResponseStreamer<GenerateCompletionResponseStream> streamer, CancellationToken cancellationToken)
 	{

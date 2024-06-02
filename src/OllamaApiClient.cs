@@ -109,22 +109,22 @@ namespace OllamaSharp
 			return new ConversationContextWithResponse(builder.ToString(), result.Context, result.Metadata);
 		}
 
-		public async Task<IEnumerable<Message>> SendChat(ChatRequest chatRequest, IResponseStreamer<ChatResponseStream> streamer, CancellationToken cancellationToken = default)
-		{
-			var request = new HttpRequestMessage(HttpMethod.Post, "api/chat")
-			{
-				Content = new StringContent(JsonSerializer.Serialize(chatRequest), Encoding.UTF8, "application/json")
-			};
+        public async Task<ConversationResponse> SendChat(ChatRequest chatRequest, IResponseStreamer<ChatResponseStream> streamer, CancellationToken cancellationToken = default)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, "api/chat")
+            {
+                Content = new StringContent(JsonSerializer.Serialize(chatRequest), Encoding.UTF8, "application/json")
+            };
 
-			var completion = chatRequest.Stream ? HttpCompletionOption.ResponseHeadersRead : HttpCompletionOption.ResponseContentRead;
+            var completion = chatRequest.Stream ? HttpCompletionOption.ResponseHeadersRead : HttpCompletionOption.ResponseContentRead;
 
-			using var response = await _client.SendAsync(request, completion, cancellationToken);
-			response.EnsureSuccessStatusCode();
+            using var response = await _client.SendAsync(request, completion, cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-			return await ProcessStreamedChatResponseAsync(chatRequest, response, streamer, cancellationToken);
-		}
+            return await ProcessStreamedChatResponseAsync(chatRequest, response, streamer, cancellationToken);
+        }
 
-		private async Task<ConversationContext> GenerateCompletion(GenerateCompletionRequest generateRequest, IResponseStreamer<GenerateCompletionResponseStream> streamer, CancellationToken cancellationToken)
+        private async Task<ConversationContext> GenerateCompletion(GenerateCompletionRequest generateRequest, IResponseStreamer<GenerateCompletionResponseStream> streamer, CancellationToken cancellationToken)
 		{
 			var request = new HttpRequestMessage(HttpMethod.Post, "api/generate")
 			{
@@ -214,42 +214,44 @@ namespace OllamaSharp
 			return new ConversationContext(Array.Empty<long>());
 		}
 
-		private static async Task<IEnumerable<Message>> ProcessStreamedChatResponseAsync(ChatRequest chatRequest, HttpResponseMessage response, IResponseStreamer<ChatResponseStream> streamer, CancellationToken cancellationToken)
-		{
-			using var stream = await response.Content.ReadAsStreamAsync();
-			using var reader = new StreamReader(stream);
+        private static async Task<ConversationResponse> ProcessStreamedChatResponseAsync(ChatRequest chatRequest, HttpResponseMessage response, IResponseStreamer<ChatResponseStream> streamer, CancellationToken cancellationToken)
+        {
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var reader = new StreamReader(stream);
 
-			ChatRole? responseRole = null;
-			var responseContent = new StringBuilder();
+            ChatRole? responseRole = null;
+            var responseContent = new StringBuilder();
 
-			while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
-			{
-				string line = await reader.ReadLineAsync();
+            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+            {
+                string line = await reader.ReadLineAsync();
 
-				var streamedResponse = JsonSerializer.Deserialize<ChatResponseStream>(line);
+                var streamedResponse = JsonSerializer.Deserialize<ChatResponseStream>(line);
 
-				// keep the streamed content to build the last message
-				// to return the list of messages
-				responseRole ??= streamedResponse?.Message?.Role;
-				responseContent.Append(streamedResponse?.Message?.Content ?? "");
+                // keep the streamed content to build the last message
+                // to return the list of messages
+                responseRole ??= streamedResponse?.Message?.Role;
+                responseContent.Append(streamedResponse?.Message?.Content ?? "");
 
-				streamer.Stream(streamedResponse);
+                streamer.Stream(streamedResponse);
 
-				if (streamedResponse?.Done ?? false)
-				{
-					var doneResponse = JsonSerializer.Deserialize<ChatDoneResponseStream>(line);
-					var messages = chatRequest.Messages.ToList();
-					messages.Add(new Message(responseRole, responseContent.ToString()));
-					return messages;
-				}
-			}
+                if (streamedResponse?.Done ?? false)
+                {
+                    var doneResponse = JsonSerializer.Deserialize<ChatDoneResponseStream>(line);
+                    var metadata = new ResponseMetadata(doneResponse.TotalDuration, doneResponse.LoadDuration, doneResponse.PromptEvalCount, doneResponse.PromptEvalDuration, doneResponse.EvalCount, doneResponse.EvalDuration);
+					var conversationResponse = new ConversationResponse(new Message(responseRole, responseContent.ToString()), metadata);
+                    return conversationResponse;
+                }
+            }
 
-			return Array.Empty<Message>();
-		}
-	}
+            return new ConversationResponse(null);
+        }
+    }
 
 	public record ResponseMetadata(long TotalDuration, long LoadDuration, int PromptEvalCount, long PromptEvalDuration, int EvalCount, long EvalDuration);
-	public record ConversationContext(long[] Context, ResponseMetadata Metadata = null);
+	public record ConversationContext(long[] Context, ResponseMetadata? Metadata = null);
 
-	public record ConversationContextWithResponse(string Response, long[] Context, ResponseMetadata Metadata = null ) : ConversationContext(Context, Metadata);
+	public record ConversationContextWithResponse(string Response, long[] Context, ResponseMetadata? Metadata = null ) : ConversationContext(Context, Metadata);
+
+    public record ConversationResponse(Message Response, ResponseMetadata? Metadata = null);
 }

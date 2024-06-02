@@ -74,7 +74,10 @@ namespace OllamaSharp
 			};
 
 			var answer = await Client.SendChat(request, Streamer, cancellationToken);
-			_messages = answer.ToList();
+            var messages = request.Messages.ToList();
+            messages.Add(answer.Response);
+            
+			_messages = messages;
 			return Messages;
 		}
 	}

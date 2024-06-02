@@ -23,8 +23,8 @@ namespace OllamaSharp
 		/// Can be used to update the user interface while the answer is still being generated.
 		/// </param>
 		/// <param name="cancellationToken">The token to cancel the operation with</param>
-		/// <returns>List of the returned messages including the previous context</returns>
-		Task<IEnumerable<Message>> SendChat(ChatRequest chatRequest, IResponseStreamer<ChatResponseStream> streamer, CancellationToken cancellationToken = default);
+		/// <returns>Response</returns>
+		Task<ConversationResponse> SendChat(ChatRequest chatRequest, IResponseStreamer<ChatResponseStream> streamer, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Sends a request to the /api/copy endpoint to copy a model
