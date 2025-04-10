@@ -80,7 +80,7 @@ internal static class AbstractionMapper
 		var hasAdditionalProperties = options?.AdditionalProperties?.Any() ?? false;
 		if (!hasAdditionalProperties)
 			return request;
-		
+
 		TryAddOllamaOption<bool?>(options, OllamaOption.F16kv, v => request.Options.F16kv = (bool?)v);
 		TryAddOllamaOption<float?>(options, OllamaOption.FrequencyPenalty, v => request.Options.FrequencyPenalty = Convert.ToSingle(v));
 		TryAddOllamaOption<bool?>(options, OllamaOption.LogitsAll, v => request.Options.LogitsAll = (bool?)v);
@@ -176,8 +176,8 @@ internal static class AbstractionMapper
 					Properties = functionMetadata.Parameters.ToDictionary(p => p.Name, p => new Property
 					{
 						Description = p.Description,
-						Enum = GetPossibleValues(p.Schema as JsonObject),
-						Type = ToFunctionTypeString(p.Schema as JsonObject)
+						Enum = GetPossibleValues(p.Schema as JsonElement?),
+						Type = ToFunctionTypeString(p.Schema as JsonElement?)
 					}),
 					Required = functionMetadata.Parameters.Where(p => p.IsRequired).Select(p => p.Name),
 					Type = Application.Object
@@ -192,17 +192,52 @@ internal static class AbstractionMapper
 	/// </summary>
 	/// <param name="schema">The schema object holding schema type information.</param>
 	/// <returns>A collection of strings containing the function types.</returns>
-	private static IEnumerable<string> GetPossibleValues(JsonObject? schema)
+	private static IEnumerable<string> GetPossibleValues(JsonElement? s)
 	{
-		return []; // TODO others supported?
+		if (s is null)
+			yield break;
+
+		var schema = s.Value;
+		// First, try to get an "enum" property directly on the schema.
+		if (schema.TryGetProperty("enum", out JsonElement enumProperty) &&
+			enumProperty.ValueKind == JsonValueKind.Array)
+		{
+			foreach (JsonElement value in enumProperty.EnumerateArray())
+			{
+				yield return value.ValueKind == JsonValueKind.String
+					? value.GetString()
+					: value.GetRawText();
+			}
+		}
+		// If the schema's type is "array", then check the "items" for an enum.
+		else if (schema.TryGetProperty("type", out JsonElement typeProp) &&
+				 typeProp.ValueKind == JsonValueKind.String &&
+				 typeProp.GetString() == "array" &&
+				 schema.TryGetProperty("items", out JsonElement items))
+		{
+			if (items.TryGetProperty("enum", out JsonElement enumItems) &&
+				enumItems.ValueKind == JsonValueKind.Array)
+			{
+				foreach (JsonElement value in enumItems.EnumerateArray())
+				{
+					yield return value.ValueKind == JsonValueKind.String
+						? value.GetString()
+						: value.GetRawText();
+				}
+			}
+		}
+		// If neither case applies, yield nothing.
+		yield break;
 	}
+
+
 
 	/// <summary>
 	/// Converts parameter schema object to a function type string.
 	/// </summary>
 	/// <param name="schema">The schema object holding schema type information.</param>
 	/// <returns>A string containing the function type.</returns>
-	private static string ToFunctionTypeString(JsonObject? schema)
+	private static string ToFunctionTypeString(JsonElement? schema)
 	{
 		return "string"; // TODO others supported?
 	}
