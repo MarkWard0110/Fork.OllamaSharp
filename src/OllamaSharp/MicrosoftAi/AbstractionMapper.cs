@@ -182,61 +182,6 @@ internal static class AbstractionMapper
 	}
 
 	/// <summary>
-	/// Converts parameter schema object to a function type string.
-	/// </summary>
-	/// <param name="schema">The schema object holding schema type information.</param>
-	/// <returns>A collection of strings containing the function types.</returns>
-	private static IEnumerable<string> GetPossibleValues(JsonElement? s)
-	{
-		if (s is null)
-			yield break;
-
-		var schema = s.Value;
-		// First, try to get an "enum" property directly on the schema.
-		if (schema.TryGetProperty("enum", out JsonElement enumProperty) &&
-			enumProperty.ValueKind == JsonValueKind.Array)
-		{
-			foreach (JsonElement value in enumProperty.EnumerateArray())
-			{
-				yield return value.ValueKind == JsonValueKind.String
-					? value.GetString()
-					: value.GetRawText();
-			}
-		}
-		// If the schema's type is "array", then check the "items" for an enum.
-		else if (schema.TryGetProperty("type", out JsonElement typeProp) &&
-				 typeProp.ValueKind == JsonValueKind.String &&
-				 typeProp.GetString() == "array" &&
-				 schema.TryGetProperty("items", out JsonElement items))
-		{
-			if (items.TryGetProperty("enum", out JsonElement enumItems) &&
-				enumItems.ValueKind == JsonValueKind.Array)
-			{
-				foreach (JsonElement value in enumItems.EnumerateArray())
-				{
-					yield return value.ValueKind == JsonValueKind.String
-						? value.GetString()
-						: value.GetRawText();
-				}
-			}
-		}
-		// If neither case applies, yield nothing.
-		yield break;
-	}
-
-
-
-	/// <summary>
-	/// Converts parameter schema object to a function type string.
-	/// </summary>
-	/// <param name="schema">The schema object holding schema type information.</param>
-	/// <returns>A string containing the function type.</returns>
-	private static string ToFunctionTypeString(JsonElement? schema)
-	{
-		return "string"; // TODO others supported?
-	}
-
-	/// <summary>
 	/// Converts a list of Microsoft.Extensions.AI.<see cref="ChatMessage"/> to a list of Ollama <see cref="Message"/>.
 	/// </summary>
 	/// <param name="messages">The chat messages to convert.</param>
